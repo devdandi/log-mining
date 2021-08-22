@@ -4,6 +4,7 @@ import glob
 import threading
 import time
 import logging
+import re
 
 
 class Gather():
@@ -16,42 +17,61 @@ class Gather():
                 "PM2" : "$HOME/.pm2/logs/XXX-error.log"
                 ## add manualy
             }
-        
 
-    def _GatherLogApplication(self):
-        files = glob.glob('properties/*production.properties')
-        config = configparser.ConfigParser()
-        config.read(files)
-        config.sections()
-        self.data._connect()
+    def run(self, files, app):
+        f = open(files, 'r')
+        while True:
+            line = ''
+            while len(line) == 0 or line[-1] != '\n':
+                
+                tail = f.readline()
+                
+                if tail == '':
+                    time.sleep(1)
+                    configparser
+                line+=tail
 
-        apps = config['ApplicationSection']['app.name'].split(',')
+            # print(line)
+            # self.data.sendMessage("{}".format(line)) # sending message to mosquitto 
+            self.data.sendMessage(str({"APP_NAME" : app, 'LOG' : line}))
+            # return True
 
-        for app in apps:
-            log_files = glob.glob(self.directory_logs[app] +'/*.log')
-            
-            for log in log_files:
 
-                f = open(log, 'r')
-
-                while True:
-                    line = ''
-                    while len(line) == 0 or line[-1] != '\n':
-                        tail = f.readline()
-
-                        if tail == '':
-                            time.sleep(1)
-                            continue
-                        line += tail
-                    self.data.sendMessage(line) # sending message to mosquitto 
 
             
 
 
 if __name__ == '__main__':
-    # gather = Gather()
+    ths = []
+    gather = Gather()
+    gather.data._connect()
+    config = configparser.ConfigParser()
+    config.read(glob.glob('properties/*production.properties'))
+    config.sections()
+
+    for app in config['ApplicationSection']['app.name'].split(','):
+        log_files = glob.glob(gather.directory_logs[app] +'/*.log')
+        
+
+        for files in log_files:
+
+            th = threading.Thread(target=gather.run, args=(files, app,))
+            ths.append(th)
+
+    for t in ths:
+        t.start()
+
+
+
+        
+
+
+
     # gather._GatherLogApplication()
-    logging.info("RUNNING APP")
-    th = threading.Thread(target=Gather()._GatherLogApplication(), args=(), daemon=True)
-    th.join()
-    th.start()
+    # logging.info("RUNNING APP")
+    # th = threading.Thread(target=Gather()._GatherLogApplication(), args=(), daemon=True)
+    # th.join()
+    
+    # th.start()
+
+
