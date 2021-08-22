@@ -3,6 +3,7 @@ import configparser
 import glob
 import threading
 import time
+import logging
 
 
 class Gather():
@@ -11,7 +12,9 @@ class Gather():
         self.data = Serv()
         self.directory_logs = {
                 "APACHE2" : "C:/xampp/apache/logs",
-                "NGINX" : "C:/xampp/nginx/logs"
+                "NGINX" : "/var/log/nginx",
+                "PM2" : "$HOME/.pm2/logs/XXX-error.log"
+                ## add manualy
             }
         
 
@@ -40,16 +43,15 @@ class Gather():
                             time.sleep(1)
                             continue
                         line += tail
-                    print(line)
-                    self.data.sendMessage(line)
+                    self.data.sendMessage(line) # sending message to mosquitto 
 
-
-    def run(self):
-        return True
-        
             
 
 
 if __name__ == '__main__':
-    gather = Gather()
-    gather._GatherLogApplication()
+    # gather = Gather()
+    # gather._GatherLogApplication()
+    logging.info("RUNNING APP")
+    th = threading.Thread(target=Gather()._GatherLogApplication(), args=(), daemon=True)
+    th.join()
+    th.start()
