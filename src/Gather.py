@@ -15,7 +15,7 @@ class Gather():
                 "APACHE2" : "C:/xampp/apache/logs",
                 "NGINX" : "/var/log/nginx",
                 "PM2" : "$HOME/.pm2/logs/XXX-error.log"
-                ## add manualy
+                ## you can add manualy
             }
 
     def run(self, files, app):
@@ -33,7 +33,12 @@ class Gather():
 
             # print(line)
             # self.data.sendMessage("{}".format(line)) # sending message to mosquitto 
-            self.data.sendMessage(str({"APP_NAME" : app, 'LOG' : line}))
+            if re.search('Error', line):
+                self.data.sendMessage(str({"APP_NAME" : app, 'LOG' : line, "TYPE": "ERROR"}))
+            else:
+                self.data.sendMessage(str({"APP_NAME" : app, 'LOG' : line, "TYPE" : "ACCESS"}))
+
+
             # return True
 
 
